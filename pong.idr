@@ -1,6 +1,7 @@
 module Main
 
 import UI.Curses
+import System
 
 Width : Nat
 Width = 50
@@ -57,12 +58,13 @@ moveBall (MkBall x y) = MkBall (applyAxis x) (applyAxis y)
 
 partial
 step : PongWorld -> IO ()
-step (MkWorld left right ball@(MkBall (MkBallAxis x dx) (MkBallAxis y dy))) =
+step w@(MkWorld left right ball@(MkBall (MkBallAxis x dx) (MkBallAxis y dy))) =
   do
     clear
     move (toIntNat y) (toIntNat x)
     addStr "*"
-    getCh
+    refresh
+    usleep 100000
     step $ MkWorld left right $ (moveBall . changeDirection) $ ball
 
 partial
