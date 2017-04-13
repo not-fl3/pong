@@ -3,25 +3,35 @@ module Main
 import UI.Curses
 
 Width : Nat
-Width = 30
+Width = 50
 
 Height : Nat
-Height = 10
+Height = 20
 
 data Direction : (max_width : Nat) -> Type where
   Forward : Direction max_width
   Backward : Direction max_width
-
-total
-flipDirection : Direction a -> Direction a
-flipDirection Forward = Backward
-flipDirection Backward = Forward
 
 data BallAxis : (bound : Nat) -> Type where
    MkBallAxis : (n : Nat) -> Direction bound -> {auto pn : LTE n bound}  -> BallAxis bound
 
 data Ball : Type where
    MkBall : BallAxis Width -> BallAxis Height -> Ball
+
+data Platform = MkPlatform Nat
+
+data PongWorld = MkWorld Platform Platform Ball
+
+defaultWorld : PongWorld
+defaultWorld = MkWorld leftPlatform rightPlatform ball where
+  ball = MkBall (MkBallAxis 8 Backward) (MkBallAxis 1 Backward)
+  leftPlatform = MkPlatform 3
+  rightPlatform = MkPlatform 3
+  
+total
+flipDirection : Direction a -> Direction a
+flipDirection Forward = Backward
+flipDirection Backward = Forward
 
 total
 changeDirection : Ball -> Ball
@@ -46,21 +56,21 @@ moveBall : Ball -> Ball
 moveBall (MkBall x y) = MkBall (applyAxis x) (applyAxis y)
 
 partial
-step : Ball -> IO ()
-step ball@(MkBall (MkBallAxis x dx) (MkBallAxis y dy)) =
+step : PongWorld -> IO ()
+step (MkWorld left right ball@(MkBall (MkBallAxis x dx) (MkBallAxis y dy))) =
   do
     clear
     move (toIntNat y) (toIntNat x)
     addStr "*"
     getCh
-    step $ (moveBall . changeDirection) $ ball
+    step $ MkWorld left right $ (moveBall . changeDirection) $ ball
 
 partial
 main : IO ()
 main = do
   startCurses WaitForever
   cursSet Invisible
-  step $ MkBall (MkBallAxis 5 Backward) (MkBallAxis 6 Backward)
+  step $ defaultWorld
   endWin
 
 -- Local Variables:
